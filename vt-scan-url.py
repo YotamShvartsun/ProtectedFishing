@@ -1,64 +1,63 @@
 import json
 import requests
 from app import URLStatusCode
+from base_db_api import BaseDBAPI
 from base64 import urlsafe_b64encode as b64enc
 
-URL = "https://www.virustotal.com/api/v3/urls"
-API_KEY = "c1a224f9daa04ebc3d7cafa6939ab0605301d48a81133fb527b8aab6c15b0c66"
-THRESHOLD = 0 # how many malicious indications to ignore
+class VtApi(BaseDBAPI):
+    def __init__(self, threshold=0):
+        self._vt_url: str = "https://www.virustotal.com/api/v3/urls"
+        self._api_key: str = "c1a224f9daa04ebc3d7cafa6939ab0605301d48a81133fb527b8aab6c15b0c66"
+        self._threshold: int = threshold
+        self._headers: dict = { "accept": "application/json", "x-apikey": self._api_key, "content-type": "application/x-www-form-urlencoded" }
+    
+    """
+    Check if URL Identifier returend from VT contains any harmful indicator
+    @type indicators: str
+    @param indicators: json with URL indications
+    @rtype: bool
+    @return: an boolean whether the URL identifier object contains malicious indications 
+    """
+    def _check_for_harmful_indications(self, indicators: str) -> bool:
+        indicators_json = json.loads(indicators)
+        if indicators_json.get("data") and indicators_json["data"].get("attributes") \
+            and indicators_json["data"]["attributes"].get("last_analysis_stats"):   
+            stat_list = indicators_json["data"]["attributes"]["last_analysis_stats"]
 
-HEADERS = {
-    "accept": "application/json",
-    "x-apikey": API_KEY,
-    "content-type": "application/x-www-form-urlencoded"
-    }
-
-"""
-This method determines if a given url is harmful
-@type target_url: str
-@param target_url: the url to check
-@rtype: URLStatusCode
-@return: a URLStatusCode of "malicious" or "harmless" depending on the script's analysis
-"""
-def is_harmful(target_url: str) -> URLStatusCode:
-    post_data = {"url" : target_url}
+            return stat_list["malicious"] > self._threshold
+        else:
+            raise ValueError("Error - Invalid Indicators JSON Format")
     
 
-    # scan the URL on VT so it will appear in the IDs list, and also retrieve the ID
-    result =  requests.post(URL, data=post_data, headers=HEADERS)
+    """
+    This method determines if a given url is harmful
+    @type domain: str
+    @param domain: the url to check
+    @rtype: bool
+    @return: a boolean of True(=malicious) or False(=safe) depending on the script's analysis
+    """
+    def is_site_safe(self, domain: str) -> bool:
+        post_data = {"url" : domain}
 
-    result_json = json.loads(result.text)
-    
-    if not result_json.get("data") and not result_json["data"].get("id"):
-        raise ValueError("Error - Invalid URL")
+        # scan the URL on VT so it will appear in the IDs list, and also retrieve the ID
+        result =  requests.post(self._vt_url, data=post_data, headers=self._headers)
 
-    url_id = result_json["data"]["id"].split("-")[1]
-    result = requests.get(f"{URL}/{url_id}", headers=HEADERS)
-    
-    is_harmful = check_for_harmful_indications(result.text)
-    return is_harmful
+        result_json = json.loads(result.text)
+        
+        if not result_json.get("data") and not result_json["data"].get("id"):
+            raise ValueError("Error - Invalid URL")
 
-"""
-Check if URL Identifier returend from VT contains any harmful indicator
-@type indicators: str
-@param indicators: json with URL indications
-@rtype: URLStatusCode
-@return: an enum whether the URL identifier object contains malicious indications 
-"""
-def check_for_harmful_indications(indicators: str) -> URLStatusCode:
-    indicators_json = json.loads(indicators)
-    if indicators_json.get("data") and indicators_json["data"].get("attributes") \
-        and indicators_json["data"]["attributes"].get("last_analysis_stats"):   
-        stat_list = indicators_json["data"]["attributes"]["last_analysis_stats"]
+        url_id = result_json["data"]["id"].split("-")[1]
+        result = requests.get(f"{self._vt_url}/{url_id}", headers=self._headers)
+        
+        is_harmful = self._check_for_harmful_indications(result.text)
+        return is_harmful
 
-        return URLStatusCode.Fishing if stat_list["malicious"] > THRESHOLD else URLStatusCode.SafeURL
-    else:
-        raise ValueError("Error - Invalid Indicators JSON Format")
-    
 
 def main():
     demo_url = "https://tsboi.com/israelpostil"
-    status = is_harmful(demo_url)
+    vt_checker = VtApi()
+    status = vt_checker.is_site_safe(demo_url)
     print(status)
 
 
