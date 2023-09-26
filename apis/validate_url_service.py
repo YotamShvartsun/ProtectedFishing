@@ -1,6 +1,6 @@
 from typing import List
 
-from base_db_api import BaseDBAPI
+from apis.base_db_api import BaseDBAPI
 
 class URLValidator:
     def __init__(self, allDBs: List[BaseDBAPI]):
