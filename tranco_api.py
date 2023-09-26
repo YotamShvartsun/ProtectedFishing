@@ -2,6 +2,8 @@ from typing import List
 from tranco import Tranco
 from tranco.tranco import TrancoList
 
+from base_db_api import BaseDBAPI
+
 class TrancoDbNotInitilizedError(Exception):
     pass
 
@@ -10,7 +12,7 @@ class TrancoDbNotInitilizedError(Exception):
 TRANCO_NOT_FOUND = -1
 
 
-class TrancoApi:
+class TrancoApi(BaseDBAPI):
     _TRANCO_BASE_CACHE_DIR = '.tranco'
 
     def __init__(self):
