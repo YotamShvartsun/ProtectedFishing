@@ -1,5 +1,6 @@
 from typing import List
 from tranco import Tranco
+from tranco.tranco import TrancoList
 
 class TrancoDbNotInitilizedError(Exception):
     pass
@@ -14,7 +15,7 @@ class TrancoApi:
 
     def __init__(self):
         self._tranco_db: Tranco = None
-        self._latest_list = None
+        self._latest_list: TrancoList = None
         self._top_sitest_list: List[str] = None
         self._tranco_cache_dir: str = None
 
@@ -34,11 +35,12 @@ class TrancoApi:
         raise TrancoDbNotInitilizedError('DB is not initialized')
     
     def is_site_safe(self, domain: str) -> bool:
+        if self._latest_list is None:
+            self.set_db()
         return TRANCO_NOT_FOUND != self._latest_list.rank(domain)
 
     def set_db(self) -> None:
         if self._tranco_db is None:
             self._tranco_db = Tranco(cache=True, cache_dir=self._TRANCO_BASE_CACHE_DIR)
         self._latest_list = self._tranco_db.list()
-        new_top_sites_list = self._latest_list.top()
-        self._top_sitest_list = new_top_sites_list
+        self._top_sitest_list = self._latest_list.top()
