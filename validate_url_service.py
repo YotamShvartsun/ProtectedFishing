@@ -3,15 +3,8 @@ import base_db_api
 
 allDBs: List[base_db_api]
 
-def initialize_db():
-    """
-    initialize all dbs
-    (maybe with bootstrapper)
-    """
-
 def validate_url(url: str) -> bool:
     for db in allDBs:
         if (not db.is_site_safe(url)):
-            """give resone why not safe"""
             return False
     return True
