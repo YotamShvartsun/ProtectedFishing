@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 from base_db_api import BaseDBAPI
 from tranco_api import TrancoApi
 
@@ -9,8 +9,8 @@ class DBFactory:
     def add_db(self, dbName: str, baseDbApi: BaseDBAPI):
         self.dbNameToObject[dbName] = baseDbApi
 
-    def get_db(self, dbName: str) -> BaseDBAPI:
-        return self.dbNameToObject[dbName]
+    def get_dbs(self) -> List[BaseDBAPI]:
+        return self.dbNameToObject
 
 
 

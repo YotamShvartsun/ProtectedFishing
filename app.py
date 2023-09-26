@@ -40,4 +40,5 @@ def static_files(path):
 
 if __name__ == '__main__':
     dbFactory = initialize_dbs()
+    dbs = dbFactory.get_dbs()
     app.run(debug=True, host='0.0.0.0', port=8080)
