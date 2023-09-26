@@ -16,5 +16,5 @@ class DBFactory:
 
 def initialize_dbs() -> DBFactory:
     dbFactory = DBFactory()
-    dbFactory.add_db("Tranco", TrancoApi)
+    dbFactory.add_db("Tranco", TrancoApi())
     return dbFactory
