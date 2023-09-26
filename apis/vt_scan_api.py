@@ -1,6 +1,5 @@
 import json
 import requests
-from app import URLStatusCode
 from base_db_api import BaseDBAPI
 from base64 import urlsafe_b64encode as b64enc
 
