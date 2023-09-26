@@ -10,8 +10,10 @@ THRESHOLD = 0 # how many malicious indications to ignore
 This method determines if a given url is harmful
 @type target_url: str
 @param target_url: the url to check
+@rtype: str
+@return: a message of "malicious" or "harmless" depending on the script's analysis
 """
-def is_harmful(target_url):
+def is_harmful(target_url: str) -> str:
     post_data = {"url" : target_url}
     headers = {
     "accept": "application/json",
@@ -37,8 +39,10 @@ def is_harmful(target_url):
 Check if URL Identifier returend from VT contains any harmful indicator
 @type indicators: str
 @param indicators: json with URL indications
+@rtype: str
+@return: a message whether the URL identifier object contains malicious indications 
 """
-def check_for_harmful_indications(indicators):
+def check_for_harmful_indications(indicators: str) -> str:
     indicators_json = loads(indicators)
     if indicators_json.get("data") and indicators_json["data"].get("attributes") \
         and indicators_json["data"]["attributes"].get("last_analysis_stats"):   
