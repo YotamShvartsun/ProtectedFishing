@@ -5,7 +5,7 @@ import logging
 import requests
 import socket
 
-from base_db_api import BaseDBAPI
+from apis.base_db_api import BaseDBAPI
 
 _LOGGER = logging.getLogger('app.apis.iplocation')
 

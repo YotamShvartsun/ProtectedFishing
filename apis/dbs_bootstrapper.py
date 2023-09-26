@@ -1,6 +1,7 @@
 from typing import Dict, List
-from base_db_api import BaseDBAPI
-from tranco_api import TrancoApi
+from apis.base_db_api import BaseDBAPI
+from apis.iplocation import IPLocationDBAPI
+from apis.tranco_api import TrancoApi
 
 class DBFactory:
     def __init__(self):
@@ -17,4 +18,5 @@ class DBFactory:
 def initialize_dbs() -> DBFactory:
     dbFactory = DBFactory()
     dbFactory.add_db("Tranco", TrancoApi())
+    dbFactory.add_db("Geolocation", IPLocationDBAPI())
     return dbFactory

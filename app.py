@@ -2,8 +2,8 @@ from dataclasses import dataclass, asdict
 from typing import List
 from enum import IntEnum
 from flask import Flask, jsonify, request
-from dbs_bootstrapper import initialize_dbs
-from validate_url_service import URLValidator
+from apis.dbs_bootstrapper import initialize_dbs
+from apis.validate_url_service import URLValidator
 
 app = Flask(__name__, static_url_path='/', static_folder='static')
 urlValidator: URLValidator
@@ -28,7 +28,7 @@ def check_url_status():
         print('Invalid request')
         return jsonify({'message': 'No URL attribute in request!'}), 400
     status = validate_url(request_body['url'])
-    result = {'url': request_body['url'], 'result': asdict(status)}
+    result = {'url': request_body['url'], 'result': status}
     return jsonify(result)
 
 @app.get('/<path:path>')
