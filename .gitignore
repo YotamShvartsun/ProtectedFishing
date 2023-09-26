@@ -265,3 +265,5 @@ pyrightconfig.json
 *.rdb
 
 # End of https://www.toptal.com/developers/gitignore/api/flask,python,redis
+# Ignoring the tranco cache
+.tranco/
