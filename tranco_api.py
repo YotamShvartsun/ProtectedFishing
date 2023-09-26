@@ -5,6 +5,10 @@ class TrancoDbNotInitilizedError(Exception):
     pass
 
 
+# The tranco.rank function returns -1 when the domain is not in the list
+TRANCO_NOT_FOUND = -1
+
+
 class TrancoApi:
     _TRANCO_BASE_CACHE_DIR = '.tranco'
 
@@ -28,6 +32,9 @@ class TrancoApi:
         if self._top_sitest_list is not None:
             return self._top_sitest_list
         raise TrancoDbNotInitilizedError('DB is not initialized')
+    
+    def is_site_safe(self, domain: str) -> bool:
+        return TRANCO_NOT_FOUND != self._latest_list.rank(domain)
 
     def set_db(self) -> None:
         if self._tranco_db is None:
