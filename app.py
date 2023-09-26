@@ -6,7 +6,9 @@ from apis.dbs_bootstrapper import initialize_dbs
 from apis.validate_url_service import URLValidator
 
 app = Flask(__name__, static_url_path='/', static_folder='static')
-urlValidator: URLValidator
+dbFactory = initialize_dbs()
+dbs = dbFactory.get_dbs()
+urlValidator: URLValidator = URLValidator(dbs.values())
 
 class URLStatusCode(IntEnum):
     SafeURL = 0
@@ -36,7 +38,4 @@ def static_files(path):
     app.send_static_file(path)
 
 if __name__ == '__main__':
-    dbFactory = initialize_dbs()
-    dbs = dbFactory.get_dbs()
-    urlValidator = URLValidator(dbs.values())
     app.run(debug=True, host='0.0.0.0', port=8080)
