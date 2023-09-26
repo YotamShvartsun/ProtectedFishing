@@ -1,7 +1,9 @@
 from typing import List
-import base_db_api
 
-allDBs: List[base_db_api]
+from base_db_api import BaseDBAPI
+
+
+allDBs: List[BaseDBAPI]
 
 def validate_url(url: str) -> bool:
     for db in allDBs:
