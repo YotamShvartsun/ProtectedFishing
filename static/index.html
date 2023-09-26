@@ -1,0 +1,12 @@
+<head>
+    <script>
+        (async () => {
+        let request_data = {a: 1, url:'www.google.com/somethin'}
+        let response = await fetch('/check-url', {method: 'post', body: JSON.stringify(request_data), headers: {'Content-Type': 'application/json'}})
+        document.getElementById('result').innerText = JSON.stringify(await response.json())
+        })()
+    </script>
+</head>
+<body>
+    <p id="result">Wating for result...</p>
+</body>
