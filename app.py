@@ -2,8 +2,11 @@ from dataclasses import dataclass, asdict
 from typing import List
 from enum import IntEnum
 from flask import Flask, jsonify, request
+from apis.dbs_bootstrapper import initialize_dbs
+from apis.validate_url_service import URLValidator
 
 app = Flask(__name__, static_url_path='/', static_folder='static')
+urlValidator: URLValidator
 
 class URLStatusCode(IntEnum):
     SafeURL = 0
@@ -16,12 +19,7 @@ class URLStatus:
     status_code: URLStatusCode
 
 def validate_url(url: str) -> URLStatus:
-    if 'www.' not in url:
-        return URLStatus(False, URLStatusCode.UnsafeSite)
-    if '.com' not in url:
-        app.logger.error(url)
-        return URLStatus(False, URLStatusCode.Fishing)
-    return URLStatus(True, URLStatusCode.SafeURL)
+    return urlValidator.validate_url(url)
 
 @app.post('/check-url')
 def check_url_status():
@@ -30,7 +28,7 @@ def check_url_status():
         print('Invalid request')
         return jsonify({'message': 'No URL attribute in request!'}), 400
     status = validate_url(request_body['url'])
-    result = {'url': request_body['url'], 'result': asdict(status)}
+    result = {'url': request_body['url'], 'result': status}
     return jsonify(result)
 
 @app.get('/<path:path>')
@@ -38,4 +36,7 @@ def static_files(path):
     app.send_static_file(path)
 
 if __name__ == '__main__':
+    dbFactory = initialize_dbs()
+    dbs = dbFactory.get_dbs()
+    urlValidator = URLValidator(dbs.values())
     app.run(debug=True, host='0.0.0.0', port=8080)
