@@ -2,7 +2,7 @@ from typing import List
 from tranco import Tranco
 from tranco.tranco import TrancoList
 
-from base_db_api import BaseDBAPI
+from apis.base_db_api import BaseDBAPI
 
 class TrancoDbNotInitilizedError(Exception):
     pass
