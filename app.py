@@ -2,6 +2,7 @@ from dataclasses import dataclass, asdict
 from typing import List
 from enum import IntEnum
 from flask import Flask, jsonify, request
+from dbs_bootstrapper import initialize_dbs
 
 app = Flask(__name__, static_url_path='/', static_folder='static')
 
@@ -38,4 +39,5 @@ def static_files(path):
     app.send_static_file(path)
 
 if __name__ == '__main__':
+    dbFactory = initialize_dbs()
     app.run(debug=True, host='0.0.0.0', port=8080)
