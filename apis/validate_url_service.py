@@ -2,7 +2,6 @@ import asyncio
 from typing import List
 
 import cachetools
-import logging
 
 from apis.validate_response import ValidationResponse, IsSiteSafe
 from apis.db_type import DBType
@@ -34,7 +33,6 @@ class URLValidator:
     
     async def validate_url(self, url: str) -> ValidationResponse:
         if url in self.url_cache:
-            _logger.debug(f'{url} in cache')
             return self.url_cache[url]
 
         domain = self.extract_domain(url)
