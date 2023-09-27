@@ -1,12 +1,10 @@
 from typing import List
 from tranco import Tranco
 from tranco.tranco import TrancoList
-
 from apis.base_db_api import BaseDBAPI
 
 class TrancoDbNotInitilizedError(Exception):
     pass
-
 
 # The tranco.rank function returns -1 when the domain is not in the list
 TRANCO_NOT_FOUND = -1
@@ -36,13 +34,13 @@ class TrancoApi(BaseDBAPI):
             return self._top_sitest_list
         raise TrancoDbNotInitilizedError('DB is not initialized')
     
-    def is_site_safe(self, domain: str) -> bool:
+    def is_in_db(self, domain: str) -> bool:
         if self._latest_list is None:
             self.set_db()
-        return TRANCO_NOT_FOUND != self._latest_list.rank(domain)
+        return self._latest_list.rank(domain) != -1
 
     def set_db(self) -> None:
         if self._tranco_db is None:
-            self._tranco_db = Tranco(cache=True, cache_dir=self._TRANCO_BASE_CACHE_DIR)
+            self._tranco_db = Tranco(cache=False, cache_dir=self._TRANCO_BASE_CACHE_DIR)
         self._latest_list = self._tranco_db.list()
         self._top_sitest_list = self._latest_list.top()

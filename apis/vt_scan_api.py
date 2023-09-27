@@ -1,6 +1,6 @@
 import json
 import requests
-from base_db_api import BaseDBAPI
+from .base_db_api import BaseDBAPI
 from base64 import urlsafe_b64encode as b64enc
 
 class VtApi(BaseDBAPI):
@@ -35,7 +35,7 @@ class VtApi(BaseDBAPI):
     @rtype: bool
     @return: a boolean of True(=malicious) or False(=safe) depending on the script's analysis
     """
-    def is_site_safe(self, domain: str) -> bool:
+    def is_in_db(self, domain: str) -> bool:
         post_data = {"url" : domain}
 
         # scan the URL on VT so it will appear in the IDs list, and also retrieve the ID
