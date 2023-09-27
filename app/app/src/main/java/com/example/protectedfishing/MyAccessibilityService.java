@@ -1,9 +1,10 @@
 package com.example.protectedfishing;
 
 import android.accessibilityservice.AccessibilityService;
-import android.os.Bundle;
+import android.content.Intent;
+import android.net.Uri;
+import android.provider.Browser;
 import android.util.Log;
-import android.util.Pair;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -19,8 +20,6 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -140,111 +139,113 @@ public class MyAccessibilityService extends AccessibilityService {
         put("mobi.mgeek.TunnyPair<String, String>", "title");
         put("org.iron.srware", "url_bar");
     }};
-    private ArrayList<Pair<String, AccessibilityNodeInfo>> getMaybeUrls(AccessibilityNodeInfo node) {
-        AccessibilityNodeInfo child1;
-        AccessibilityNodeInfo child2;
-        ArrayList<Pair<String, AccessibilityNodeInfo>> results = new ArrayList<>();
-        Log.d(TAG, "getMaybeUrls: " + node.findAccessibilityNodeInfosByViewId("com.android.chrome:id/url_bar"));
 
-        for (int i=0; i < node.getChildCount(); i++) {
-            child1 = node.getChild(i);
-            for (int j=0; j < child1.getChildCount(); j++) {
-                child2 = child1.getChild(j);
-                if(child2.getClassName().equals("android.widget.EditText")) {
-                    Log.d(TAG, "getMaybeUrls: " + child2);
-                    Log.d(TAG, "getMaybeUrls mamamamama: " + child2.getViewIdResourceName());
-                    results.add(new Pair<>(child2.getText().toString(), child2));
+    private AccessibilityNodeInfo findUrlBar(AccessibilityNodeInfo node) {
+        AccessibilityNodeInfo result;
+
+        if (node.getClassName().toString().equals("android.widget.EditText")) {
+            return node;
+        }
+
+        if (node.getChildCount() > 0) {
+            for (int i = 0; i < node.getChildCount(); i++) {
+                result = findUrlBar(node.getChild(i));
+                if (result != null) {
+                    return result;
                 }
             }
         }
 
-        return results;
+        return null;
+    }
+
+    private String getMaybeUrl(AccessibilityNodeInfo node) {
+        AccessibilityNodeInfo urlBar;
+        String packageName = node.getPackageName().toString();
+
+        if (viewIdDict.containsKey(packageName)) {
+            Log.d(TAG, "getMaybeUrl: Browser in viewid map");
+            urlBar = node.findAccessibilityNodeInfosByViewId(packageName + ":id/" + viewIdDict.get(packageName)).get(0);
+        }
+        else {
+            Log.d(TAG, "getMaybeUrl: Browser not in viewid map. Searching all children");
+            urlBar = findUrlBar(node);  // not the best solution but ok
+        }
+
+        if (urlBar != null && urlBar.getClassName().toString().equals("android.widget.EditText")) {
+            Log.d(TAG, "getMaybeUrl: Allegedly found urlBar " + urlBar);
+            return urlBar.getText().toString();
+        }
+
+        return "";
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
-        ArrayList<Pair<String, AccessibilityNodeInfo>> urls = getMaybeUrls(accessibilityEvent.getSource());
-        if (urls.size() != 1) {
-            Log.d(TAG, "onAccessibilityEvent: :( too many uirls");
-            for (Pair<String, AccessibilityNodeInfo> urlPair: urls) {
-                Log.d(TAG, "onAccessibilityEvent: " + urlPair.first);
-            }
+        AccessibilityNodeInfo node = accessibilityEvent.getSource();
+        String url = getMaybeUrl(node);
+
+        if (url.length() == 0) {
+            Log.d(TAG, "onAccessibilityEvent: Didn't find url");
         }
         else {
-            Log.d(TAG, "onAccessibilityEvent: YESYESYES");
-            Log.d(TAG, "onAccessibilityEvent: " + urls.get(0).first);
+            Log.d(TAG, "onAccessibilityEvent: Found url " + url);
 
-            JSONObject j = new JSONObject();
+            JSONObject jsonRequestData = new JSONObject();
             try {
-
-                j.put("url", urls.get(0).first);
+                jsonRequestData.put("url", url);
             } catch (JSONException e) {
-                Log.d(TAG, "onAccessibilityEvent: jsonexception");
+                Log.d(TAG, "onAccessibilityEvent: JSONException " + e);
             }
+            String requestData = jsonRequestData.toString();
 
-            String data = j.toString();
+            Log.d(TAG, "onAccessibilityEvent: Trying to send data " + requestData);
 
             ExecutorService mExecutor = Executors.newSingleThreadExecutor();
             Runnable backgroundRunnable = () -> {
                 try {
-                    Log.d(TAG, "onAccessibilityEvent: beforewrite77");
-                    URL url = new URL("https://protected-fishing.vercel.app/check-url");
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    Log.d(TAG, "onAccessibilityEvent: Connecting to server");
+                    URL serverUrl = new URL("https://protected-fishing.vercel.app/check-url");
+                    HttpURLConnection urlConnection = (HttpURLConnection) serverUrl.openConnection();
                     urlConnection.setRequestMethod("POST");
                     urlConnection.setDoOutput(true);
                     urlConnection.setRequestProperty("Content-Type", "application/json");
                     urlConnection.connect();
+
+                    Log.d(TAG, "onAccessibilityEvent: Sending request");
                     OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                    Log.d(TAG, "onAccessibilityEvent: beforewrite");
                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
-                    writer.write(data);
-                    Log.d(TAG, "onAccessibilityEvent: beforewrite2");
+                    writer.write(requestData);
                     writer.flush();
                     writer.close();
                     out.close();
-                    Log.d(TAG, "onAccessibilityEvent: beforewrite3");
-                    Log.d(TAG, "onAccessibilityEvent: beforewrite3");
 
+                    Log.d(TAG, "onAccessibilityEvent: Reading response");
                     BufferedReader br;
                     int code = urlConnection.getResponseCode();
-                    Log.d(TAG, "onAccessibilityEvent: code is " + code);
+                    Log.d(TAG, "onAccessibilityEvent: Response code is " + code);
                     if (code == 200) {
                         br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
                     } else {
                         br = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
                     }
-                    Log.d(TAG, "onAccessibilityEvent: beforewrite4");
-                    Log.d(TAG, "onAccessibilityEvent: shashahsa " + br.readLine());
 
+                    String response = br.readLine(); // need to read response better
+                    br.close();
+                    Log.d(TAG, "onAccessibilityEvent: Response is " + response);
                 } catch (Exception e) {
-                    Log.d(TAG, "onAccessibilityEvent: " + e);
+                    Log.d(TAG, "onAccessibilityEvent: Exception on server request " + e);
                 }
             };
 
             mExecutor.execute(backgroundRunnable);
 
-            Bundle arguments = new Bundle();
-            arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "https://www.openu.ac.il/");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Log.d(TAG, "onAccessibilityEvent: exception");
-            }
-//            urls.get(0).second.setText("https://www.openu.ac.il/");
-//            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.openu.ac.il/"));
-//            intent.setPackage("com.android.chrome");
-//            intent.putExtra(Browser.EXTRA_APPLICATION_ID, "com.android.chrome");
-//            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-//            startActivity(intent);
-//            AccessibilityNodeInfo url_bar = urls.get(0).second;
-//            url_bar.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-//            url_bar.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments);
-            //url_bar.performAction(AccessibilityNodeInfo.ACTION)
-//            Log.d(TAG, "blabla: " + url_bar.getParent());
-            //url_bar.setChecked();
-            //url_bar.performAction(AccessibilityNodeInfo.)
-
-
+            Log.d(TAG, "onAccessibilityEvent: Opening another url");
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.openu.ac.il/"));
+            intent.setPackage("com.android.chrome");
+            intent.putExtra(Browser.EXTRA_APPLICATION_ID, "com.android.chrome");
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
     }
 
