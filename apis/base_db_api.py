@@ -1,8 +1,7 @@
 import abc
-from db_type import DBType
+from apis.db_type import DBType
 
 class BaseDBAPI(abc.ABC):
-    @abc.abstractmethod
     def __init__(self, dbType: DBType):
         self.dbType = dbType
 
