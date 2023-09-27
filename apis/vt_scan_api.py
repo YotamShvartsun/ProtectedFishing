@@ -58,8 +58,9 @@ class VtApi(BaseDBAPI):
         result =  requests.post(self._vt_url, data=post_data, headers=self._headers)
 
         result_json = json.loads(result.text)
-        
-        if not result_json.get("data") and not result_json["data"].get("id"):
+        if result_json.get("error"):
+            raise Exception(result_json["error"]["message"])
+        elif not result_json.get("data") and not result_json["data"].get("id"):
             raise ValueError("Error - Invalid URL")
 
         url_id = result_json["data"]["id"].split("-")[1]
