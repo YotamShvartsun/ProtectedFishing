@@ -20,16 +20,16 @@ class URLStatus:
     is_safe: bool
     status_code: URLStatusCode
 
-def validate_url(url: str) -> URLStatus:
-    return urlValidator.validate_url(url)
+async def validate_url(url: str) -> URLStatus:
+    return await urlValidator.validate_url(url)
 
 @app.post('/check-url')
-def check_url_status():
+async def check_url_status():
     request_body = dict(request.get_json())
     if 'url' not in request_body.keys():
         print('Invalid request')
         return jsonify({'message': 'No URL attribute in request!'}), 400
-    status = validate_url(request_body['url'])
+    status = await validate_url(request_body['url'])
     result = {'url': request_body['url'], 'result': status}
     return jsonify(result)
 

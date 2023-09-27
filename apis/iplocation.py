@@ -2,6 +2,7 @@ from typing import Union
 from dataclasses import dataclass
 import ipaddress
 import logging
+import aiohttp
 import requests
 import socket
 
@@ -40,10 +41,12 @@ class FailedToResolveDomain(Exception):
 
 class IPLocationDBAPI(BaseDBAPI):
     UNSAFE_COUNTRY_CODES = ['ir', 'sy', 'lb']
-    def get_location_info(self, ip: Union[ipaddress.IPv4Address, ipaddress.IPv6Address]) -> GeolocationResponse:
-        response = requests.get(LOCATION_API.format(str(ip)))
-        response.raise_for_status()
-        json_response = response.json()
+    async def get_location_info(self, ip: Union[ipaddress.IPv4Address, ipaddress.IPv6Address]) -> GeolocationResponse:
+        async with aiohttp.ClientSession() as session:
+            response = await session.get(LOCATION_API.format(str(ip)))
+            response.raise_for_status()
+            json_response = await response.json()
+
         if json_response['status'] != 'success':
             raise LocationApiFailedToFetchIpError(
                 f'For ip: {str(ip)}, the api: {LOCATION_API} failed to fetch geoinfo'
@@ -62,11 +65,10 @@ class IPLocationDBAPI(BaseDBAPI):
     def is_in_safe_country(self, country_code: str) -> bool:
         return country_code not in self.UNSAFE_COUNTRY_CODES
 
-    def is_in_db(self, domain: str) -> bool:
+    async def is_in_db(self, domain: str) -> bool:
         try:
             ip_addr = self.get_ip_from_domain(domain)
-            location_data = self.get_location_info(ip_addr)
-            _LOGGER.info(f'domain {domain} has location {location_data}')
+            location_data = await self.get_location_info(ip_addr)
             _LOGGER.debug(f'Unsafe country codes are {self.UNSAFE_COUNTRY_CODES}, and the current country code is {location_data.countryCode}')
             return not self.is_in_safe_country(location_data.countryCode.lower())
         except FailedToResolveDomain:

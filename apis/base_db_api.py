@@ -6,5 +6,5 @@ class BaseDBAPI(abc.ABC):
         self.dbType = dbType
 
     @abc.abstractmethod
-    def is_in_db(self, domain: str) -> bool:
-        raise NotImplementedError()
+    async def is_in_db(self, domain: str) -> bool:
+        raise NotImplementedError() 
