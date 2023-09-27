@@ -35,7 +35,7 @@ class VtApi(BaseDBAPI):
     @rtype: bool
     @return: a boolean of True(=malicious) or False(=safe) depending on the script's analysis
     """
-    def is_site_safe(self, domain: str) -> bool:
+    async def is_site_safe(self, domain: str) -> bool:
         post_data = {"url" : domain}
 
         # scan the URL on VT so it will appear in the IDs list, and also retrieve the ID
