@@ -46,7 +46,6 @@ def warn_user():
     if 'redirect_to' not in request_arguments.keys() or 'warning_type' not in request_arguments.keys():
         return render_template('error.html'), 400
     warning_type = request_arguments['warning_type']
-    print(warning_type)
     if WarningType.MaybeUnsafe == int(warning_type):
         return render_template('yellow_warning.html', url=request_arguments['redirect_to'])
 
