@@ -139,6 +139,7 @@ public class MyAccessibilityService extends AccessibilityService {
         put("mobi.mgeek.TunnyPair<String, String>", "title");
         put("org.iron.srware", "url_bar");
     }};
+    private static final String BASE_SERVER_URL = "https://protected-fishing.vercel.app";
 
     private AccessibilityNodeInfo findUrlBar(AccessibilityNodeInfo node) {
         AccessibilityNodeInfo result;
@@ -180,6 +181,75 @@ public class MyAccessibilityService extends AccessibilityService {
         return "";
     }
 
+    private void redirect(String originalUrl, int warnginType) {
+        Log.d(TAG, "onAccessibilityEvent: Opening another url");
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_SERVER_URL + "/warn-user?redirect_to=" + originalUrl + "&warning_type=" + warnginType));
+        intent.setPackage("com.android.chrome");  // TODO: need to open in the correct browser
+        intent.putExtra(Browser.EXTRA_APPLICATION_ID, "com.android.chrome");
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+    }
+
+    private void checkUrl(String url) {
+        JSONObject jsonRequestData = new JSONObject();
+        try {
+            jsonRequestData.put("url", url);
+        } catch (JSONException e) {
+            Log.d(TAG, "onAccessibilityEvent: JSONException " + e);
+        }
+        String requestData = jsonRequestData.toString();
+
+        Log.d(TAG, "onAccessibilityEvent: Trying to send data " + requestData);
+
+        try {
+            Log.d(TAG, "onAccessibilityEvent: Connecting to server");
+            URL serverUrl = new URL(BASE_SERVER_URL + "/check-url");
+            HttpURLConnection urlConnection = (HttpURLConnection) serverUrl.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setDoOutput(true);
+            urlConnection.setRequestProperty("Content-Type", "application/json");
+            urlConnection.connect();
+
+            Log.d(TAG, "onAccessibilityEvent: Sending request");
+            OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+            writer.write(requestData);
+            writer.flush();
+            writer.close();
+            out.close();
+
+            Log.d(TAG, "onAccessibilityEvent: Reading response");
+            BufferedReader br;
+
+            int code = urlConnection.getResponseCode();
+            Log.d(TAG, "onAccessibilityEvent: Response code is " + code);
+            if (code == 200) {
+                br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            } else {
+                br = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
+            }
+
+            char[] buffer = new char[1024];
+            StringBuilder response = new StringBuilder();
+            while (br.read(buffer, 0, 1024) != -1) {
+                response.append(buffer);
+            }
+
+            Log.d(TAG, "onAccessibilityEvent: Response is " + response);
+            br.close();
+
+            JSONObject jsonResponse = new JSONObject(response.toString());
+            JSONObject result = jsonResponse.getJSONObject("result");
+            int isSafe = result.getInt("isSafe");
+
+            if (isSafe != 0) {
+                redirect(url, isSafe);
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "onAccessibilityEvent: Exception on server request " + e);
+        }
+    }
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
         AccessibilityNodeInfo node = accessibilityEvent.getSource();
@@ -191,61 +261,9 @@ public class MyAccessibilityService extends AccessibilityService {
         else {
             Log.d(TAG, "onAccessibilityEvent: Found url " + url);
 
-            JSONObject jsonRequestData = new JSONObject();
-            try {
-                jsonRequestData.put("url", url);
-            } catch (JSONException e) {
-                Log.d(TAG, "onAccessibilityEvent: JSONException " + e);
-            }
-            String requestData = jsonRequestData.toString();
-
-            Log.d(TAG, "onAccessibilityEvent: Trying to send data " + requestData);
-
             ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-            Runnable backgroundRunnable = () -> {
-                try {
-                    Log.d(TAG, "onAccessibilityEvent: Connecting to server");
-                    URL serverUrl = new URL("https://protected-fishing.vercel.app/check-url");
-                    HttpURLConnection urlConnection = (HttpURLConnection) serverUrl.openConnection();
-                    urlConnection.setRequestMethod("POST");
-                    urlConnection.setDoOutput(true);
-                    urlConnection.setRequestProperty("Content-Type", "application/json");
-                    urlConnection.connect();
-
-                    Log.d(TAG, "onAccessibilityEvent: Sending request");
-                    OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
-                    writer.write(requestData);
-                    writer.flush();
-                    writer.close();
-                    out.close();
-
-                    Log.d(TAG, "onAccessibilityEvent: Reading response");
-                    BufferedReader br;
-                    int code = urlConnection.getResponseCode();
-                    Log.d(TAG, "onAccessibilityEvent: Response code is " + code);
-                    if (code == 200) {
-                        br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                    } else {
-                        br = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
-                    }
-
-                    String response = br.readLine(); // TODO: need to read response better
-                    br.close();
-                    Log.d(TAG, "onAccessibilityEvent: Response is " + response);
-                } catch (Exception e) {
-                    Log.d(TAG, "onAccessibilityEvent: Exception on server request " + e);
-                }
-            };
-
+            Runnable backgroundRunnable = () -> checkUrl(url);
             mExecutor.execute(backgroundRunnable);
-
-            Log.d(TAG, "onAccessibilityEvent: Opening another url");
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://openu.ac.il"));
-            intent.setPackage("com.android.chrome");  // TODO: need to open in the correct browser
-            intent.putExtra(Browser.EXTRA_APPLICATION_ID, "com.android.chrome");
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
         }
     }
 
