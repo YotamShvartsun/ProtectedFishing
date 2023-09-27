@@ -12,7 +12,7 @@ class URLValidator:
         for db in self.allDBs:
             isInDb = db.is_in_db(url)
             if isInDb:
-                return ValidationResponse(db.type, isInDb, self._is_site_safe(db.type, isInDb))
+                return ValidationResponse(db.dbType, isInDb, self._is_site_safe(db.dbType, isInDb))
     return ValidationResponse("NotFound", False, IsSiteSafe(2))
 
     def _is_site_safe(self, dbType: DBType, isInDb: bool) -> IsSiteSafe:
