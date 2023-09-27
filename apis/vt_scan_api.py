@@ -1,6 +1,7 @@
 import json
+import aiohttp
 import requests
-from base_db_api import BaseDBAPI
+from apis.base_db_api import BaseDBAPI
 from base64 import urlsafe_b64encode as b64enc
 
 class VtApi(BaseDBAPI):
@@ -38,18 +39,22 @@ class VtApi(BaseDBAPI):
     async def is_site_safe(self, domain: str) -> bool:
         post_data = {"url" : domain}
 
-        # scan the URL on VT so it will appear in the IDs list, and also retrieve the ID
-        result =  requests.post(self._vt_url, data=post_data, headers=self._headers)
+        async with aiohttp.ClientSession() as session:
+            # scan the URL on VT so it will appear in the IDs list, and also retrieve the ID
+            result =  await session.post(self._vt_url, data=post_data, headers=self._headers)
+            result.raise_for_status()
+            result_json = await result.json()
 
-        result_json = json.loads(result.text)
-        
         if not result_json.get("data") and not result_json["data"].get("id"):
             raise ValueError("Error - Invalid URL")
 
         url_id = result_json["data"]["id"].split("-")[1]
-        result = requests.get(f"{self._vt_url}/{url_id}", headers=self._headers)
+        async with aiohttp.ClientSession() as indications_session:
+            result = await indications_session.get(f"{self._vt_url}/{url_id}", headers=self._headers)
+            result.raise_for_status()
+            indications_text = await result.text()
         
-        is_harmful = self._check_for_harmful_indications(result.text)
+        is_harmful = self._check_for_harmful_indications(indications_text)
         return is_harmful
 
 

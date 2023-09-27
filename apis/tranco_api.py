@@ -42,8 +42,7 @@ class TrancoApi(BaseDBAPI):
             _LOGGER.debug('no cached list, setting db...')
             self.set_db()
             _LOGGER.info('Done setting the db')
-        result = self._latest_list.rank(domain)
-        return result
+        return self._latest_list.rank(domain)
 
     def set_db(self) -> None:
         _LOGGER.info('Initializing the TrancoDB service...')
