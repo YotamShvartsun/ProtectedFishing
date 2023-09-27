@@ -1,8 +1,10 @@
 from typing import List
-
+import logging
 from urllib import parse as url_parser
 
 from apis.base_db_api import BaseDBAPI
+
+_logger = logging.getLogger('app.apis.validate-service')
 
 class URLValidator:
     def __init__(self, allDBs: List[BaseDBAPI]):
@@ -16,6 +18,7 @@ class URLValidator:
 
     def validate_url(self, url: str) -> bool:
         domain = self.extract_domain(url)
+        _logger.error(f'{url}, and {domain}')
         for db in self.allDBs:
             if (not db.is_site_safe(domain)):
                 return False
