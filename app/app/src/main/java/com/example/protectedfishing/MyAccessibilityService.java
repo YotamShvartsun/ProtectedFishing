@@ -230,7 +230,7 @@ public class MyAccessibilityService extends AccessibilityService {
                         br = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
                     }
 
-                    String response = br.readLine(); // need to read response better
+                    String response = br.readLine(); // TODO: need to read response better
                     br.close();
                     Log.d(TAG, "onAccessibilityEvent: Response is " + response);
                 } catch (Exception e) {
@@ -241,8 +241,8 @@ public class MyAccessibilityService extends AccessibilityService {
             mExecutor.execute(backgroundRunnable);
 
             Log.d(TAG, "onAccessibilityEvent: Opening another url");
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.openu.ac.il/"));
-            intent.setPackage("com.android.chrome");
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://openu.ac.il"));
+            intent.setPackage("com.android.chrome");  // TODO: need to open in the correct browser
             intent.putExtra(Browser.EXTRA_APPLICATION_ID, "com.android.chrome");
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
