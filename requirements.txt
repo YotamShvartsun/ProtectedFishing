@@ -1,3 +1,4 @@
 Flask
 tranco
 aiohttp
+cachetools~=5.3.0
