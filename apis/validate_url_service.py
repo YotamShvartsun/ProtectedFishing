@@ -14,6 +14,8 @@ class URLValidator:
         """
         This function extracts the domain from a given URL
         """
+        if not url.startswith('http'):
+            url = 'http://' + url
         return url_parser.urlparse(url).netloc
 
     def validate_url(self, url: str) -> bool:
