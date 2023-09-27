@@ -1,6 +1,5 @@
 import abc
 from db_type import DBType
-from validate_response import ValidationResponse
 
 class BaseDBAPI(abc.ABC):
     @abc.abstractmethod
@@ -8,5 +7,5 @@ class BaseDBAPI(abc.ABC):
         self.type = type
 
     @abc.abstractmethod
-    def is_site_safe(self, domain: str) -> bool:
+    def is_in_db(self, domain: str) -> bool:
         raise NotImplementedError()
