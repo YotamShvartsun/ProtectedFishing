@@ -1,14 +1,30 @@
+import math
 import json
 import requests
+from datetime import datetime
 from base_db_api import BaseDBAPI
 from base64 import urlsafe_b64encode as b64enc
 
+
 class VtApi(BaseDBAPI):
-    def __init__(self, threshold=0):
+    def __init__(self, threshold=0.8):
         self._vt_url: str = "https://www.virustotal.com/api/v3/urls"
         self._api_key: str = "c1a224f9daa04ebc3d7cafa6939ab0605301d48a81133fb527b8aab6c15b0c66"
         self._threshold: int = threshold
         self._headers: dict = { "accept": "application/json", "x-apikey": self._api_key, "content-type": "application/x-www-form-urlencoded" }
+
+    """
+    Check using heuristics if the site is harmful (derived from the last scanned time and number of engines who flagged it as malicious)
+    @type stat_list: str
+    @param stat_list: json with URL indications
+    @type last_scanned: int
+    @param last_scanned: unix timestamp of when the url was last scanned
+    """
+    def _is_harmful_from_indications(self, stat_list: dict, last_scanned: int):
+        is_harmful = False # stat_list["malicious"] > self._threshold
+        daytime_diff = datetime.today() - datetime.fromtimestamp(last_scanned)
+        return ((math.log(daytime_diff.days + 2, 10) ** -1) * stat_list["malicious"] * 0.2) >= self._threshold
+
     
     """
     Check if URL Identifier returend from VT contains any harmful indicator
@@ -23,10 +39,10 @@ class VtApi(BaseDBAPI):
             and indicators_json["data"]["attributes"].get("last_analysis_stats"):   
             stat_list = indicators_json["data"]["attributes"]["last_analysis_stats"]
 
-            return stat_list["malicious"] > self._threshold
+            return self._is_harmful_from_indications(stat_list, indicators_json["data"]["attributes"]["last_submission_date"])
         else:
             raise ValueError("Error - Invalid Indicators JSON Format")
-    
+
 
     """
     This method determines if a given url is harmful
@@ -50,7 +66,7 @@ class VtApi(BaseDBAPI):
         result = requests.get(f"{self._vt_url}/{url_id}", headers=self._headers)
         
         is_harmful = self._check_for_harmful_indications(result.text)
-        return is_harmful
+        return not is_harmful
 
 
 def main():
