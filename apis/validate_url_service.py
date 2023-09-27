@@ -15,8 +15,8 @@ class URLValidator:
         return ValidationResponse("NotFound", False, IsSiteSafe(2))
 
     def _is_site_safe(self, dbType: DBType, isInDb: bool) -> IsSiteSafe:
-        if dbType == "WhiteList" and isInDb:
-            return IsSiteSafe(0)
-        if dbType == "BlackList" and isInDb:
-            return IsSiteSafe(1)
-        return IsSiteSafe(2)
+        if dbType == DBType.WhiteList and isInDb:
+            return IsSiteSafe.Yes
+        if dbType == DBType.BlackList and isInDb:
+            return IsSiteSafe.No
+        return IsSiteSafe.Unknown

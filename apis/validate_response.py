@@ -1,4 +1,4 @@
-
+from dataclasses import dataclass
 from enum import IntEnum
 
 class IsSiteSafe(IntEnum):
@@ -6,6 +6,7 @@ class IsSiteSafe(IntEnum):
     No = 1
     Unknown = 2
 
+@dataclass
 class ValidationResponse:
     status: str
     isInDb: bool
