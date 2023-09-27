@@ -65,7 +65,7 @@ class IPLocationDBAPI(BaseDBAPI):
     def is_site_safe(self, domain: str) -> bool:
         try:
             ip_addr = self.get_ip_from_domain(domain)
-            _LOGGER.error(ip_addr, domain)
+            _LOGGER.error(f'{ip_addr}, {domain}')
             location_data = self.get_location_info(ip_addr)
             _LOGGER.info(f'domain {domain} has location {location_data}')
             _LOGGER.debug(f'Unsafe country codes are {self.UNSAFE_COUNTRY_CODES}, and the current country code is {location_data.countryCode}')
