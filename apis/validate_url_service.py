@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 import logging
 from urllib import parse as url_parser
@@ -16,10 +17,8 @@ class URLValidator:
         if not url.startswith('http'):
             url = 'http://' + url
         return url_parser.urlparse(url).netloc
-
-    def validate_url(self, url: str) -> bool:
+        
+    async def validate_url(self, url: str) -> bool:
         domain = self.extract_domain(url)
-        for db in self.allDBs:
-            if (not db.is_site_safe(domain)):
-                return False
-        return True
+        results = await asyncio.gather(*[db.is_site_safe(domain) for db in self.allDBs])
+        return False not in results
