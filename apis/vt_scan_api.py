@@ -1,7 +1,7 @@
 import json
 import aiohttp
 import requests
-from apis.base_db_api import BaseDBAPI
+from apis.base_db_api import BaseDBAPI, extract_domain_from_url
 from base64 import urlsafe_b64encode as b64enc
 from apis.db_type import DBType
 
@@ -38,6 +38,7 @@ class VtApi(BaseDBAPI):
     @rtype: bool
     @return: a boolean of True(=malicious) or False(=safe) depending on the script's analysis
     """
+    @extract_domain_from_url
     async def is_in_db(self, domain: str) -> bool:
         post_data = {"url" : domain}
 

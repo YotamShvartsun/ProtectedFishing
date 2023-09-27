@@ -30,7 +30,7 @@ async def validate_url(url: str) -> URLStatus:
 async def check_url_status():
     request_body = dict(request.get_json())
     if 'url' not in request_body.keys():
-        print('Invalid request')
+        app.logger.error(f'Invalid request! JSON data: {request_body}')
         return jsonify({'message': 'No URL attribute in request!'}), 400
     status = await validate_url(request_body['url'])
     result = {'url': request_body['url'], 'result': status}
