@@ -1,13 +1,22 @@
 from typing import List
 
+from urllib import parse as url_parser
+
 from apis.base_db_api import BaseDBAPI
 
 class URLValidator:
     def __init__(self, allDBs: List[BaseDBAPI]):
         self.allDBs = allDBs
 
+    def extract_domain(self, url: str) -> str:
+        """
+        This function extracts the domain from a given URL
+        """
+        return url_parser.urlparse(url).netloc
+
     def validate_url(self, url: str) -> bool:
+        domain = self.extract_domain(url)
         for db in self.allDBs:
-            if (not db.is_site_safe(url)):
+            if (not db.is_site_safe(domain)):
                 return False
         return True
