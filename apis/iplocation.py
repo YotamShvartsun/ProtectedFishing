@@ -57,7 +57,7 @@ class IPLocationDBAPI(BaseDBAPI):
 
     def get_ip_from_domain(self, domain: str) -> ipaddress.IPv4Address:
         try:
-            return socket.gethostbyname(domain)
+            return ipaddress.IPv4Address(socket.gethostbyname(domain))
         except socket.gaierror:
             _LOGGER.error(f'Failed to resolve domain name {domain}')
             raise FailedToResolveDomain()
