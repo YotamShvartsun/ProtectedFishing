@@ -34,10 +34,10 @@ class TrancoApi(BaseDBAPI):
             return self._top_sitest_list
         raise TrancoDbNotInitilizedError('DB is not initialized')
     
-    def is_site_safe(self, domain: str) -> bool:
+    def is_in_db(self, domain: str) -> bool:
         if self._latest_list is None:
             self.set_db()
-        return self._latest_list.rank(domain)
+        return self._latest_list.rank(domain) != -1
 
     def set_db(self) -> None:
         if self._tranco_db is None:

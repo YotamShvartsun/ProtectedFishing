@@ -62,15 +62,16 @@ class IPLocationDBAPI(BaseDBAPI):
     def is_in_safe_country(self, country_code: str) -> bool:
         return country_code not in self.UNSAFE_COUNTRY_CODES
 
-    def is_site_safe(self, domain: str) -> bool:
+    def is_in_db(self, domain: str) -> bool:
         try:
             ip_addr = self.get_ip_from_domain(domain)
             location_data = self.get_location_info(ip_addr)
             _LOGGER.info(f'domain {domain} has location {location_data}')
             _LOGGER.debug(f'Unsafe country codes are {self.UNSAFE_COUNTRY_CODES}, and the current country code is {location_data.countryCode}')
-            return self.is_in_safe_country(location_data.countryCode.lower())
+            return not self.is_in_safe_country(location_data.countryCode.lower())
         except FailedToResolveDomain:
-            return True
+            return False
+
 
 
 # if __name__ == '__main__':
