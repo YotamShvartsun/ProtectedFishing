@@ -8,7 +8,6 @@ from apis.db_type import DBType
 from urllib import parse as url_parser
 from apis.base_db_api import BaseDBAPI
 
-_logger = logging.getLogger(__file__)
 
 class URLValidator:
     _CACHE_MAX_SIZE = 10 ** 4
