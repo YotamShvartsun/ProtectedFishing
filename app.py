@@ -15,8 +15,8 @@ class URLStatusCode(IntEnum):
     UnsafeSite = 2
 
 class WarningType(IntEnum):
-    MaybeUnsafe = 1,
-    UnsafeURL = 2
+    MaybeUnsafe = 2,
+    UnsafeURL = 1
 
 @dataclass
 class URLStatus:
@@ -45,12 +45,16 @@ def warn_user():
     request_arguments = dict(request.args)
     if 'redirect_to' not in request_arguments.keys() or 'warning_type' not in request_arguments.keys():
         return render_template('error.html'), 400
+    redirect_to = request_arguments['redirect_to']
+    if not redirect_to.startswith('http'):
+        redirect_to = 'http://' + redirect_to
+    
     warning_type = request_arguments['warning_type']
     if WarningType.MaybeUnsafe == int(warning_type):
-        return render_template('yellow_warning.html', url=request_arguments['redirect_to'])
+        return render_template('yellow_warning.html', url=redirect_to)
 
     if WarningType.UnsafeURL == int(warning_type):
-        return render_template('red_warning.html', url=request_arguments['redirect_to'])
+        return render_template('red_warning.html', url=redirect_to)
     return render_template('error.html')
 
 if __name__ == '__main__':
