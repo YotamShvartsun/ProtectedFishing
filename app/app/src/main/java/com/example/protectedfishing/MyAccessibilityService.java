@@ -196,6 +196,11 @@ public class MyAccessibilityService extends AccessibilityService {
     }
 
     private void checkUrl(String url) {
+        if (url.startsWith("https")) {
+            url = url.substring(5);
+        } else if (url.startsWith("http")) {
+            url = url.substring(4);
+        }
         if (url.startsWith("protected-fishing.vercel.app")) {
             Log.d(TAG, "checkUrl: our domain");
             return;
@@ -265,6 +270,13 @@ public class MyAccessibilityService extends AccessibilityService {
         AccessibilityNodeInfo node = accessibilityEvent.getSource();
         String url = getMaybeUrl(node);
 
+        if (url.equals("Search or type web address")) {
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException ignored) {}
+            url = getMaybeUrl(node);
+        }
+
         if (url.length() == 0) {
             Log.d(TAG, "onAccessibilityEvent: Didn't find url");
         }
@@ -272,7 +284,8 @@ public class MyAccessibilityService extends AccessibilityService {
             Log.d(TAG, "onAccessibilityEvent: Found url " + url);
 
             ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-            Runnable backgroundRunnable = () -> checkUrl(url);
+            String finalUrl = url;
+            Runnable backgroundRunnable = () -> checkUrl(finalUrl);
             mExecutor.execute(backgroundRunnable);
         }
     }
