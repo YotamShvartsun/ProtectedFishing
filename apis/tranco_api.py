@@ -3,6 +3,7 @@ from typing import List
 from tranco import Tranco
 from tranco.tranco import TrancoList
 from apis.base_db_api import BaseDBAPI
+from apis.db_type import DBType
 
 class TrancoDbNotInitilizedError(Exception):
     pass
@@ -15,7 +16,8 @@ _LOGGER = logging.getLogger('app.apis.iplocation')
 class TrancoApi(BaseDBAPI):
     _TRANCO_BASE_CACHE_DIR = '.tranco'
 
-    def __init__(self):
+    def __init__(self, dbType: DBType):
+        super().__init__(dbType)
         self._tranco_db: Tranco = None
         self._latest_list: TrancoList = None
         self._top_sitest_list: List[str] = None
@@ -37,12 +39,12 @@ class TrancoApi(BaseDBAPI):
             return self._top_sitest_list
         raise TrancoDbNotInitilizedError('DB is not initialized')
     
-    async def is_site_safe(self, domain: str) -> bool:
+    async def is_in_db(self, domain: str) -> bool:
         if self._latest_list is None:
             _LOGGER.debug('no cached list, setting db...')
             self.set_db()
             _LOGGER.info('Done setting the db')
-        return self._latest_list.rank(domain)
+        return self._latest_list.rank(domain) != -1
 
     def set_db(self) -> None:
         _LOGGER.info('Initializing the TrancoDB service...')

@@ -1,6 +1,7 @@
 import asyncio
 from typing import List
-import logging
+from apis.validate_response import ValidationResponse, IsSiteSafe
+from apis.db_type import DBType
 from urllib import parse as url_parser
 
 from apis.base_db_api import BaseDBAPI
@@ -8,7 +9,8 @@ from apis.base_db_api import BaseDBAPI
 
 class URLValidator:
     def __init__(self, allDBs: List[BaseDBAPI]):
-        self.allDBs = allDBs
+        self.white_dbs = [db for db in allDBs if db.dbType == DBType.WhiteList]
+        self.black_dbs = [db for db in allDBs if db.dbType == DBType.BlackList]
 
     def extract_domain(self, url: str) -> str:
         """
@@ -18,7 +20,14 @@ class URLValidator:
             url = 'http://' + url
         return url_parser.urlparse(url).netloc
         
-    async def validate_url(self, url: str) -> bool:
+    async def validate_url(self, url: str) -> ValidationResponse:        
         domain = self.extract_domain(url)
-        results = await asyncio.gather(*[db.is_site_safe(domain) for db in self.allDBs])
-        return False not in results
+        white_dbs_results = await asyncio.gather(*[db.is_in_db(domain) for db in self.white_dbs])
+        if any(white_dbs_results):
+            return ValidationResponse(DBType.WhiteList, True, IsSiteSafe.Yes)
+        
+        black_dbs_results = await asyncio.gather(*[db.is_in_db(domain) for db in self.black_dbs])
+        if any(black_dbs_results):
+            return ValidationResponse(DBType.BlackList, True, IsSiteSafe.No)
+        return ValidationResponse(None, False, IsSiteSafe.Unknown)
+

@@ -1,6 +1,10 @@
 import abc
+from apis.db_type import DBType
 
 class BaseDBAPI(abc.ABC):
+    def __init__(self, dbType: DBType):
+        self.dbType = dbType
+
     @abc.abstractmethod
-    async def is_site_safe(self, domain: str) -> bool:
+    async def is_in_db(self, domain: str) -> bool:
         raise NotImplementedError() 
