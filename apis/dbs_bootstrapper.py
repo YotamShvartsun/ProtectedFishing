@@ -1,7 +1,12 @@
+import logging
+
 from typing import Dict, List
 from apis.base_db_api import BaseDBAPI
 from apis.iplocation import IPLocationDBAPI
 from apis.tranco_api import TrancoApi
+from apis.vt_scan_api import VtApi
+
+_LOGGER = logging.getLogger("app.apis.dbs-bootstrap")
 
 class DBFactory:
     def __init__(self):
@@ -16,7 +21,10 @@ class DBFactory:
 
 
 def initialize_dbs() -> DBFactory:
+    _LOGGER.info('Initalizing DBs...')
     dbFactory = DBFactory()
     dbFactory.add_db("Tranco", TrancoApi())
     dbFactory.add_db("Geolocation", IPLocationDBAPI())
+    dbFactory.add_db("VirusTotal", VtApi())
+    _LOGGER.info("Done initing DBs!")
     return dbFactory
