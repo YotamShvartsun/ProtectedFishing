@@ -8,5 +8,5 @@ class BaseDBAPI(abc.ABC):
         self.type = type
 
     @abc.abstractmethod
-    def is_site_safe(self, domain: str) -> ValidationResponse:
+    def is_site_safe(self, domain: str) -> bool:
         raise NotImplementedError()
