@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -161,12 +162,16 @@ public class MyAccessibilityService extends AccessibilityService {
     }
 
     private String getMaybeUrl(AccessibilityNodeInfo node) {
-        AccessibilityNodeInfo urlBar;
+        AccessibilityNodeInfo urlBar = null;
+        List<AccessibilityNodeInfo> nodeList;
         String packageName = node.getPackageName().toString();
 
         if (viewIdDict.containsKey(packageName)) {
             Log.d(TAG, "getMaybeUrl: Browser in viewid map");
-            urlBar = node.findAccessibilityNodeInfosByViewId(packageName + ":id/" + viewIdDict.get(packageName)).get(0);
+            nodeList = node.findAccessibilityNodeInfosByViewId(packageName + ":id/" + viewIdDict.get(packageName));
+            if(nodeList.size() > 0) {
+                urlBar = nodeList.get(0);
+            }
         }
         else {
             Log.d(TAG, "getMaybeUrl: Browser not in viewid map. Searching all children");
@@ -191,6 +196,11 @@ public class MyAccessibilityService extends AccessibilityService {
     }
 
     private void checkUrl(String url) {
+        if (url.startsWith("protected-fishing.vercel.app")) {
+            Log.d(TAG, "checkUrl: our domain");
+            return;
+        }
+        
         JSONObject jsonRequestData = new JSONObject();
         try {
             jsonRequestData.put("url", url);
