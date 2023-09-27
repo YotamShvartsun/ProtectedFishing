@@ -3,9 +3,11 @@ import aiohttp
 import requests
 from apis.base_db_api import BaseDBAPI
 from base64 import urlsafe_b64encode as b64enc
+from apis.db_type import DBType
 
 class VtApi(BaseDBAPI):
-    def __init__(self, threshold=0):
+    def __init__(self, dbType: DBType, threshold=0):
+        super().__init__(dbType)
         self._vt_url: str = "https://www.virustotal.com/api/v3/urls"
         self._api_key: str = "c1a224f9daa04ebc3d7cafa6939ab0605301d48a81133fb527b8aab6c15b0c66"
         self._threshold: int = threshold
@@ -51,7 +53,8 @@ class VtApi(BaseDBAPI):
         url_id = result_json["data"]["id"].split("-")[1]
         async with aiohttp.ClientSession() as indications_session:
             result = await indications_session.get(f"{self._vt_url}/{url_id}", headers=self._headers)
-            result.raise_for_status()
+            if not result.ok:
+                return False
             indications_text = await result.text()
         
         is_harmful = self._check_for_harmful_indications(indications_text)

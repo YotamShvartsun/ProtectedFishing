@@ -10,12 +10,12 @@ class URLValidator:
         self.black_dbs = [db for db in allDBs if db.dbType == DBType.BlackList]
 
     async def validate_url(self, url: str) -> ValidationResponse:        
-        white_dbs_results = await asyncio.gather(*[db.is_in_db(domain) for db in self.white_dbs])
-        for any(white_dbs_results):
+        white_dbs_results = await asyncio.gather(*[db.is_in_db(url) for db in self.white_dbs])
+        if any(white_dbs_results):
             return ValidationResponse(DBType.WhiteList, True, IsSiteSafe.Yes)
         
-        black_dbs_results = await asyncio.gather(*[db.is_in_db(domain) for db in self.black_dbs])
-        for any(black_dbs_results):
+        black_dbs_results = await asyncio.gather(*[db.is_in_db(url) for db in self.black_dbs])
+        if any(black_dbs_results):
             return ValidationResponse(DBType.BlackList, True, IsSiteSafe.No)
         return ValidationResponse(None, False, IsSiteSafe.Unknown)
 
