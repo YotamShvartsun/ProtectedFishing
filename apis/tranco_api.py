@@ -2,7 +2,7 @@ import logging
 from typing import List
 from tranco import Tranco
 from tranco.tranco import TrancoList
-from apis.base_db_api import BaseDBAPI
+from apis.base_db_api import BaseDBAPI, extract_domain_from_url
 from apis.db_type import DBType
 
 class TrancoDbNotInitilizedError(Exception):
@@ -39,6 +39,7 @@ class TrancoApi(BaseDBAPI):
             return self._top_sitest_list
         raise TrancoDbNotInitilizedError('DB is not initialized')
     
+    @extract_domain_from_url
     async def is_in_db(self, domain: str) -> bool:
         if self._latest_list is None:
             _LOGGER.debug('no cached list, setting db...')

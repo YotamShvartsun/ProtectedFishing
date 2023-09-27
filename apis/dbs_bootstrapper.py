@@ -26,6 +26,6 @@ def initialize_dbs() -> DBFactory:
     dbFactory = DBFactory()
     dbFactory.add_db("Tranco", TrancoApi(DBType.WhiteList))
     dbFactory.add_db("Geolocation", IPLocationDBAPI(DBType.BlackList))
-    dbFactory.add_db("VirusTotal", VtApi(DBType.BlackList))
+    # dbFactory.add_db("VirusTotal", VtApi(DBType.BlackList))
     _LOGGER.info("Done initing DBs!")
     return dbFactory
