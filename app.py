@@ -1,11 +1,10 @@
-from dataclasses import dataclass, asdict
-from typing import List
+from dataclasses import dataclass
 from enum import IntEnum
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from apis.dbs_bootstrapper import initialize_dbs
 from apis.validate_url_service import URLValidator
 
-app = Flask(__name__, static_url_path='/', static_folder='static')
+app = Flask(__name__, static_url_path='/', static_folder='static', template_folder='static')
 dbFactory = initialize_dbs()
 dbs = dbFactory.get_dbs()
 urlValidator: URLValidator = URLValidator(dbs.values())
@@ -14,6 +13,10 @@ class URLStatusCode(IntEnum):
     SafeURL = 0
     Fishing = 1,
     UnsafeSite = 2
+
+class WarningType(IntEnum):
+    MaybeUnsafe = 1,
+    UnsafeURL = 2
 
 @dataclass
 class URLStatus:
@@ -36,6 +39,19 @@ async def check_url_status():
 @app.get('/<path:path>')
 def static_files(path):
     app.send_static_file(path)
+
+@app.get('/warn-user')
+def warn_user():
+    request_arguments = dict(request.args)
+    if 'redirect_to' not in request_arguments.keys() or 'warning_type' not in request_arguments.keys():
+        return render_template('error.html'), 400
+    warning_type = request_arguments['warning_type']
+    if WarningType.MaybeUnsafe == int(warning_type):
+        return render_template('yellow_warning.html', url=request_arguments['redirect_to'])
+
+    if WarningType.UnsafeURL == int(warning_type):
+        return render_template('red_warning.html', url=request_arguments['redirect_to'])
+    return render_template('error.html')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
